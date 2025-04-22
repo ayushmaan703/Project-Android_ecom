@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000324700186",
+    "project_id": "ecomm-personal",
+    "storage_bucket": "ecomm-personal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000324700186:android:4eb658eb18583b8ca959a3",
+        "android_client_info": {
+          "package_name": "com.ecommfrontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtakeVyrQrJRUkNRkRXo1qXfBXFOr4v-Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
