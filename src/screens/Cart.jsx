@@ -9,25 +9,25 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
-interface CartItemProps {
-  item: {
-    id: string;
-    name: string;
-    price: string;
-    quantity: number;
-    image: any;
-  };
-}
+// interface CartItemProps {
+//   item: {
+//     id: string;
+//     name: string;
+//     price: string;
+//     quantity: number;
+//     image: any;
+//   };
+// }
 
-interface CartItemType {
-  id: string;
-  name: string;
-  price: string;
-  quantity: number;
-  image: any;
-}
+// interface CartItemType {
+//   id: string;
+//   name: string;
+//   price: string;
+//   quantity: number;
+//   image: any;
+// }
 
-const CartItem: React.FC<CartItemProps> = ({item}) => (
+const CartItem = ({item}) => (
   <View style={styles.cartItemContainer}>
     <Image source={item.image} style={styles.itemImage} />
     <View style={styles.itemDetails}>
@@ -41,8 +41,8 @@ const CartItem: React.FC<CartItemProps> = ({item}) => (
   </View>
 );
 
-const Cart: React.FC = () => {
-  const cartItems: CartItemType[] = [
+const Cart = () => {
+  const cartItems= [
     {
       id: '1',
       name: 'Prod Name',

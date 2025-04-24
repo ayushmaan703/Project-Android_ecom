@@ -23,6 +23,7 @@ export const adminCreateAccount = createAsyncThunk(
     formData.append('fullName', data.fullName);
     formData.append('email', data.email);
     formData.append('password', data.password);
+    formData.append('fcm', data.fcm);
     formData.append(
       'photo',
       // data.photo,

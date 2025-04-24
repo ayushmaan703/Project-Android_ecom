@@ -27,7 +27,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlatList, ScrollView } from 'react-native-gesture-handler';
 import { deleteAProd, getAllProducts, makeProductsNull, publishAProduct, updateDiscount } from '../store/slice/products.slice';
 import { getWaitlist } from '../store/slice/waitlist.slice';
+import { sendNotificaiton, sendNotificaitonToAll } from '../store/slice/notification.control';
+
 const logout = <Icon name="sign-out-alt" size={18} color="#fff" />;
+
 const AdminControlPanel = () => {
 
     const showToast = (type = 'info', message = 'Something happened!') => {
@@ -53,10 +56,10 @@ const AdminControlPanel = () => {
     const [newFullName, setNewFullName] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [stockUpdateData, setStockUpdateData] = useState(null);
-
     const adminDetails = useSelector((state) => state.admin?.adminData)
     const waitlistData = useSelector((state) => state.waiting?.waitlistData) || []
     const products = useSelector((state) => state?.prod?.products)
+
 
     const StockSchema = Yup.object().shape({
         name: Yup.string().required('Product name is required'),
@@ -67,6 +70,7 @@ const AdminControlPanel = () => {
             .required('Quantity of product is required')
             .typeError("Quantity must be a number"),
     });
+    
     const StockUpdateSchema = Yup.object().shape({
         discount: Yup.number()
             .required('Discount on this product is required')
@@ -78,6 +82,7 @@ const AdminControlPanel = () => {
         setUpdateStockDetailsModalVisible(true)
         setStockUpdateData(data)
     }
+
     const handleUpdateStock1 = async (data) => {
         let prodId = stockUpdateData._id
         const response = await dispatch(updateDiscount({ prodId, data }))
@@ -85,6 +90,10 @@ const AdminControlPanel = () => {
             showToast("success", "Stock updated successfully")
             await dispatch(makeProductsNull())
             await dispatch(getAllProducts({}))
+            dispatch(sendNotificaitonToAll({
+                title: 'Somethings New',
+                body: 'Some Products have updated discounts and offers .',
+            }))
         }
         else {
             showToast("error", "Error updating")
@@ -103,13 +112,30 @@ const AdminControlPanel = () => {
         }
     }
 
-    const handleVerifyUser = async (data) => {
+    const handleVerifyUser = async (data, data2) => {
         const response = await dispatch(verifyUser(data))
-        if (response.type === "verifyUser/fulfilled") {
+        if (response.type === "verifyUser/fulfilled" && response.payload.message == "User created successfully") {
             showToast("success", "User Verified successfully")
+            dispatch(sendNotificaiton({
+                token: data2.fcm,
+                title: 'Verification Status',
+                body: 'Verfication requested accepted.',
+            }))
+        }
+        else if (response.type === "verifyUser/fulfilled" && response.payload.message == "Admin denied authentication") {
+            dispatch(sendNotificaiton({
+                token: data2.fcm,
+                title: 'Verification Status',
+                body: 'Verfication requested rejected.',
+            }))
         }
         else {
             showToast("error", "Error verifying")
+            dispatch(sendNotificaiton({
+                token: data2.fcm,
+                title: 'Verification Status',
+                body: 'Verfication requested rejected.',
+            }))
         }
     }
 
@@ -125,6 +151,10 @@ const AdminControlPanel = () => {
                 await dispatch(makeProductsNull())
                 await dispatch(getAllProducts({}))
                 showToast("success", "Product posted successfully")
+                dispatch(sendNotificaitonToAll({
+                    title: 'New Product',
+                    body: 'A new product has been added.',
+                }))
             } else {
                 Alert.alert('Publish Failed');
             }
@@ -468,14 +498,14 @@ const AdminControlPanel = () => {
                                                         color="green"
                                                         onPress={() => {
                                                             setWaitlistModalVisible(false),
-                                                                handleVerifyUser("true")
+                                                                handleVerifyUser("true", { userId: item.list[0].userName, fcm: item.list[0].fcmToken })
                                                         }} />
                                                     <Button
                                                         title="deny"
                                                         color="red"
                                                         onPress={() => {
                                                             setWaitlistModalVisible(false),
-                                                                handleVerifyUser("false")
+                                                                handleVerifyUser("false", { userId: item.list[0].userName, fcm: item.list[0].fcmToken })
                                                         }} />
                                                 </View>
                                             </View>
@@ -596,7 +626,7 @@ const AdminControlPanel = () => {
                                             padding: 10,
                                             marginBottom: 10,
                                             color: '#000',
-                                            fontWeight:'bold'
+                                            fontWeight: 'bold'
                                         }}>Current Discount : {stockUpdateData.discount}</Text>
                                         <TextInput
                                             placeholder="New Discount"
@@ -637,6 +667,7 @@ const AdminControlPanel = () => {
                         </View>
                     </TouchableOpacity>
                 </View>
+
             </SafeAreaView>
         </ScrollView>
     );
@@ -779,10 +810,10 @@ const styles = StyleSheet.create({
     photoButtonText: {
         color: '#007BFF'
     },
-        error: {
-            color: 'red',
-            fontSize: 12
-        },
+    error: {
+        color: 'red',
+        fontSize: 12
+    },
     stockOverlay: {
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         justifyContent: "center",

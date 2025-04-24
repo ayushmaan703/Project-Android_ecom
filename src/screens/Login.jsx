@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -14,11 +16,62 @@ import { useEffect, useState } from 'react';
 import AdminLoginScreen from '../adminControls/AdminLogin.jsx';
 import { useNavigation } from '@react-navigation/native';
 import { customerLogin } from '../store/slice/customer.slice.js';
-
+import messaging from '@react-native-firebase/messaging';
 const LoginScreen = () => {
+
+  useEffect(() => {
+    requestNotificationPermission();
+    subscribeToTopic();
+  }, []);
+
+  const dispatch = useDispatch();
+  const [fcmToken, setFcmToken] = useState(null);
   const navigation = useNavigation()
   const [isClicked, setIsClicked] = useState("customer")
-  const dispatch = useDispatch();
+  const loginSchema = Yup.object().shape({
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().required('Password is required'),
+  });
+
+  const subscribeToTopic = async () => {
+    try {
+      await messaging().subscribeToTopic('allUsers');
+      console.log('Subscribed to allUsers topic');
+    } catch (err) {
+      console.log('Error subscribing to topic:', err);
+    }
+  };
+
+  const requestNotificationPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          getFcmToken();
+        }
+        else {
+          getFcmToken();
+        }
+
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+  };
+
+  const getFcmToken = async () => {
+    try {
+      const token = await messaging().getToken()
+      if (token) {
+        setFcmToken(token);
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error);
+    }
+  };
 
   const showToast = (userName) => {
     Toast.show({
@@ -32,7 +85,8 @@ const LoginScreen = () => {
     { resetForm }
   ) => {
     try {
-      const result = await dispatch(customerLogin(values))
+      const data = { ...values, fcm: fcmToken }
+      const result = await dispatch(customerLogin(data))
       if (result.type === "customerLogin/fulfilled") {
         navigation.replace('Home');
         showToast(result.payload.customerName)
@@ -46,12 +100,6 @@ const LoginScreen = () => {
       Alert.alert('An error occurred', error);
     }
   };
-
-  const loginSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid email').required('Email is required'),
-    password: Yup.string().required('Password is required'),
-  });
-
 
   return (isClicked == "admin" ? <AdminLoginScreen /> :
     (<Formik

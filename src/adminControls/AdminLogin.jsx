@@ -11,15 +11,45 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
 import Toast from 'react-native-toast-message';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LoginScreen from '../screens/Login.jsx';
 import { adminLogin } from '../store/slice/adminControl.slice.js';
 import { useNavigation } from '@react-navigation/native';
+import messaging from '@react-native-firebase/messaging';
 
 const AdminLoginScreen = () => {
-    const navigation = useNavigation()  
+
+    useEffect(() => { getFcmToken(), subscribeToTopic() });
+
+    const [fcmToken, setFcmToken] = useState(null);
+    const navigation = useNavigation()
     const [isClicked, setIsClicked] = useState("admin")
     const dispatch = useDispatch();
+    const loginSchema = Yup.object().shape({
+        uniqueId: Yup.string().required('Unique Id is required'),
+        email: Yup.string().email('Invalid email').required('Email is required'),
+        password: Yup.string().required('Password is required'),
+    });
+
+    const subscribeToTopic = async () => {
+        try {
+            await messaging().subscribeToTopic('allUsers');
+            console.log('Subscribed to allUsers topic');
+        } catch (err) {
+            console.log('Error subscribing to topic:', err);
+        }
+    };
+
+    const getFcmToken = async () => {
+        try {
+            const token = await messaging().getToken()
+            if (token) {
+                setFcmToken(token);
+            }
+        } catch (error) {
+            console.error('Error getting FCM token:', error);
+        }
+    };
 
     const showToast = (userName) => {
         Toast.show({
@@ -33,7 +63,8 @@ const AdminLoginScreen = () => {
         { resetForm }
     ) => {
         try {
-            const result = await dispatch(adminLogin(values))
+            const data = { ...values, fcm: fcmToken }
+            const result = await dispatch(adminLogin(data))
             if (result.type === "adminLogin/fulfilled") {
                 navigation.replace('Home');
                 showToast(result.payload.userName)
@@ -47,11 +78,6 @@ const AdminLoginScreen = () => {
             Alert.alert('An error occurred', error);
         }
     };
-    const loginSchema = Yup.object().shape({
-        uniqueId: Yup.string().required('Unique Id is required'),
-        email: Yup.string().email('Invalid email').required('Email is required'),
-        password: Yup.string().required('Password is required'),
-    });
 
     return (isClicked == "customer" ? <LoginScreen /> :
         (<Formik

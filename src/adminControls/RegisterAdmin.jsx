@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -14,17 +14,15 @@ import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { adminCreateAccount } from '../store/slice/adminControl.slice';
+import messaging from '@react-native-firebase/messaging';
 
 const AdminRegisterScreen = ({ navigation }) => {
-    const showToast = (userName) => {
-        Toast.show({
-            type: 'success', // 'success', 'error', 'info'
-            text1: `Hello ${userName}!`,
-        });
-    };
+
+    useEffect(() => { getFcmToken() });
+
+    const [fcmToken, setFcmToken] = useState(null);
     const [photo, setphoto] = useState(null);
     const dispatch = useDispatch();
-
     const RegistrationSchema = Yup.object().shape({
         userName: Yup.string().required('Username is required'),
         uniqueId: Yup.string().required('UniqueId is required'),
@@ -34,11 +32,24 @@ const AdminRegisterScreen = ({ navigation }) => {
             .min(6, 'Password must be at least 6 characters')
             .required('Password is required'),
     });
+    
+    const getFcmToken = async () => {
+        try {
+            const token = await messaging().getToken()
+            if (token) {
+                setFcmToken(token);
+            }
+        } catch (error) {
+            console.error('Error getting FCM token:', error);
+        }
+    };
+
+
     const handleRegistration = async (
         values,
         { resetForm }
     ) => {
-        const data = { ...values, photo: photo }
+        const data = { ...values, photo: photo, fcm: fcmToken }
         try {
             const result = await dispatch(adminCreateAccount(data))
             if (result.type === "createAccount/fulfilled") {

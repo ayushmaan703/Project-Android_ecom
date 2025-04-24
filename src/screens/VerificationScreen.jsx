@@ -10,20 +10,9 @@ import { userLogin } from '../store/slice/auth.slice.js';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
-import Toast from 'react-native-toast-message';
-import { useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
 
 const VerificationScreen = () => {
-    const navigation = useNavigation()
     const dispatch = useDispatch();
-
-    const showToast = (userName) => {
-        Toast.show({
-            type: 'success',
-            text1: `Hello ${userName}!`,
-        });
-    };
 
     const handleLogin = async (
         values,

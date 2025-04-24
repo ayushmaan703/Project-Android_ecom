@@ -7,7 +7,9 @@ const initialState = {
   status: false,
   userData: null,
 };
-export const createAccount = createAsyncThunk('createAccount', async data => {
+export const createAccount = createAsyncThunk('createAccount', async data => {  
+  console.log(data);
+  
   const formData = new FormData();
   // {
   //   userName: data.userName,
@@ -20,6 +22,7 @@ export const createAccount = createAsyncThunk('createAccount', async data => {
   formData.append('fullName', data.fullName);
   formData.append('email', data.email);
   formData.append('password', data.password);
+  formData.append('fcm', data.fcm);
   formData.append(
     'photo',
     // data.photo,
@@ -38,6 +41,7 @@ export const createAccount = createAsyncThunk('createAccount', async data => {
     throw error;
   }
 });
+
 export const userLogin = createAsyncThunk('login', async data => {
   try {
     const response = await axiosInstance.post('/user/login', data);
